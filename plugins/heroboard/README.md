@@ -8,7 +8,7 @@ MCP, effort heartbeats that turn your terminal time into XP, and `/heroboard` co
   `report_progress`, `create_epic`, `close_task`.
 - **Effort heartbeats** (0 tokens — plain HTTP, no model call):
   - every prompt → **Monkey** (human) time
-  - every file edit (`Edit`/`Write`/`MultiEdit`) → **Agent** time
+  - every agent tool use (edits, `Bash`, search, MCP calls…) → **Agent** time
 - **Slash commands**: `/heroboard:login`, `/heroboard:tasks`, `/heroboard:task <KEY>`, `/heroboard:status`, `/heroboard:ship`.
 
 ## Install
@@ -32,4 +32,4 @@ remove them after installing — the plugin replaces both (and reads the key fro
 ## Notes
 - Heartbeats are fire-and-forget (3s timeout, backgrounded) — never block or fail a prompt.
 - No key set → heartbeats silently no-op; nothing breaks.
-- Continuous presence ticker is opt-in: set `HEROBOARD_PRESENCE_TICKER=1`.
+- Continuous presence ticker is **on by default** — toggle it via the plugin's config (`/plugin`). It keeps effort accruing every ~60s while a session is open, even when you're watching a long agent run and not typing.
