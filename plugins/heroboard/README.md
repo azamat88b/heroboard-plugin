@@ -13,7 +13,7 @@ MCP, effort heartbeats that turn your terminal time into XP, and `/heroboard` co
 
 ## Install
 ```
-/plugin marketplace add azamat88b/heroboard      # or the path to this repo
+/plugin marketplace add azamat88b/heroboard-plugin
 /plugin install heroboard@heroboard
 ```
 

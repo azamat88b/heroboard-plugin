@@ -1,5 +1,6 @@
 {
   "name": "heroboard",
+  "description": "Heroboard for Claude Code — task tools (MCP), effort heartbeats, and /heroboard commands.",
   "owner": { "name": "Heroboard" },
   "plugins": [
     {
