@@ -9,27 +9,27 @@ MCP, effort heartbeats that turn your terminal time into XP, and `/heroboard` co
 - **Effort heartbeats** (0 tokens — plain HTTP, no model call):
   - every prompt → **Monkey** (human) time
   - every file edit (`Edit`/`Write`/`MultiEdit`) → **Agent** time
-- **Slash commands** (coming): `/heroboard:tasks`, `/heroboard:task <KEY>`, `/heroboard:status`, `/heroboard:ship`.
+- **Slash commands**: `/heroboard:login`, `/heroboard:tasks`, `/heroboard:task <KEY>`, `/heroboard:status`, `/heroboard:ship`.
 
 ## Install
 ```
 /plugin marketplace add azamat88b/heroboard-plugin
 /plugin install heroboard@heroboard
 ```
+On enable, Claude Code **prompts once for your Heroboard API key** and stores it securely in your
+system keychain — no `export`, no env var, no config file. Get a key in Heroboard →
+**Settings → MCP → “+ New key”**. (Requires Claude Code 2.1.143+.)
 
-## Set your API key (once)
-The plugin reads `HEROBOARD_API_KEY` from your environment. Get a key in Heroboard →
-**Settings → MCP → “+ New key”**, then add to your shell profile (e.g. `~/.zshrc`):
-```sh
-export HEROBOARD_API_KEY="hb_live_…"
-```
-Restart Claude Code so the MCP server and hooks pick it up. (`/heroboard:login` will automate
-this — see HB-233.)
+The same stored key powers both the MCP server and the effort hooks. It works the same on
+macOS / Linux / Windows and in GUI editors (VSCode, JetBrains) — anywhere Claude Code runs.
 
-## Migrating from manual hooks
-If you set up the heartbeat hooks by hand in `~/.claude/settings.json`, remove them after
-installing the plugin so heartbeats don't fire twice.
+To change the key later, update the plugin's config via `/plugin` (or disable + re-enable).
+
+## Migrating from manual setup
+If you previously added a `~/.claude/settings.json` heartbeat hook or `export HEROBOARD_API_KEY`,
+remove them after installing — the plugin replaces both (and reads the key from the keychain).
 
 ## Notes
-- Heartbeats are fire-and-forget (3s timeout, backgrounded) — they never block or fail a prompt.
+- Heartbeats are fire-and-forget (3s timeout, backgrounded) — never block or fail a prompt.
 - No key set → heartbeats silently no-op; nothing breaks.
+- Continuous presence ticker is opt-in: set `HEROBOARD_PRESENCE_TICKER=1`.

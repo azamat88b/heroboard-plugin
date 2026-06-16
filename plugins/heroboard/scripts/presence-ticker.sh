@@ -17,12 +17,13 @@ stop() {
 
 start() {
   [ "${HEROBOARD_PRESENCE_TICKER:-}" = "1" ] || exit 0
-  [ -z "${HEROBOARD_API_KEY:-}" ] && exit 0
+  key="${CLAUDE_PLUGIN_OPTION_api_key:-${HEROBOARD_API_KEY:-}}"  # userConfig (HB-244), legacy env fallback
+  [ -z "$key" ] && exit 0
   stop  # avoid duplicate loops
   ( i=0
     while [ "$i" -lt 720 ]; do            # 720 * 60s = 12h safety cap
       curl -s -m 3 -X POST "https://v2.heroboard.app/api/heartbeat" \
-        -H "X-Api-Key: ${HEROBOARD_API_KEY}" -H "Content-Type: application/json" \
+        -H "X-Api-Key: ${key}" -H "Content-Type: application/json" \
         -d '{"kind":"heartbeat"}' >/dev/null 2>&1
       i=$((i + 1)); sleep 60
     done

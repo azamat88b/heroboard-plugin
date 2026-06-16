@@ -1,7 +1,16 @@
 {
   "name": "heroboard",
   "description": "Heroboard: gamified dev board for Claude Code — MCP task tools, effort heartbeats (Monkey/Agent time), and /heroboard commands.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": { "name": "Heroboard" },
-  "homepage": "https://v2.heroboard.app"
+  "homepage": "https://v2.heroboard.app",
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "Heroboard API key",
+      "description": "Get one in Heroboard → Settings → MCP → “+ New key”. Stored securely in your system keychain — not in env or any file.",
+      "sensitive": true,
+      "required": true
+    }
+  }
 }
