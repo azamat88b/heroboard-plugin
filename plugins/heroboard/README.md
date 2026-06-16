@@ -17,11 +17,17 @@ MCP, effort heartbeats that turn your terminal time into XP, and `/heroboard` co
 /plugin install heroboard@heroboard
 ```
 On enable, Claude Code **prompts once for your Heroboard API key** and stores it securely in your
-system keychain — no `export`, no env var, no config file. Get a key in Heroboard →
+system keychain — no `export`, no env var. Get a key in Heroboard →
 **Settings → MCP → “+ New key”**. (Requires Claude Code 2.1.143+.)
 
 The same stored key powers both the MCP server and the effort hooks. It works the same on
 macOS / Linux / Windows and in GUI editors (VSCode, JetBrains) — anywhere Claude Code runs.
+
+**Agent-mode (Claude app) note.** In desktop/web *agent-mode* sessions the keychain key reaches
+the MCP server but isn't exported into the effort hooks' shell env, so the hooks alone can't
+authenticate. To bridge this, the first terminal CLI session caches the key to `~/.heroboard/key`
+(`0600`), which agent-mode hooks then read. So run the plugin in a terminal once after install to
+enable effort tracking inside the app. Delete that file to opt out.
 
 To change the key later, update the plugin's config via `/plugin` (or disable + re-enable).
 

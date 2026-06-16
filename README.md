@@ -9,7 +9,7 @@ source for the Heroboard Claude Code plugin. It is mirrored to the public market
 /plugin marketplace add azamat88b/heroboard-plugin
 /plugin install heroboard@heroboard
 ```
-Then set `export HEROBOARD_API_KEY="hb_live_…"` (Heroboard → Settings → MCP → “+ New key”) and run `/heroboard:login`.
+Claude Code then prompts for your Heroboard API key (Heroboard → Settings → MCP → “+ New key”) and stores it in your system keychain — no `export`, no env var. The one key powers both the MCP server and the effort heartbeats. Run `/heroboard:login` to verify. (For effort tracking inside the Claude desktop/web app, run the plugin in a terminal once — see `plugins/heroboard/README.md`.)
 
 The plugin bundles the Heroboard MCP tools, effort heartbeats (Monkey/Agent time, 0 tokens),
 and `/heroboard` slash commands. See `plugins/heroboard/README.md`.

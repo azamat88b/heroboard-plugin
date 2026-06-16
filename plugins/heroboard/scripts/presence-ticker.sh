@@ -24,14 +24,23 @@ start() {
   case "$(printf '%s' "$toggle" | tr '[:upper:]' '[:lower:]')" in
     0|false|off|no|"") exit 0 ;;
   esac
-  key="${CLAUDE_PLUGIN_OPTION_api_key:-${HEROBOARD_API_KEY:-}}"  # userConfig (HB-244), legacy env fallback
+  . "$(cd "$(dirname "$0")" && pwd)/_key.sh"  # keychain key, with ~/.heroboard/key fallback (HB-252)
+  key="$(hb_resolve_key)"
   [ -z "$key" ] && exit 0
+  # Repo of the session's working dir, captured once → the server maps it to a project so
+  # presence time accrues to the right workspace (HB-250). Not a repo → unattributed.
+  repo="$(git -C "${CLAUDE_PROJECT_DIR:-$PWD}" config --get remote.origin.url 2>/dev/null)"
+  if [ -n "$repo" ]; then
+    payload="{\"kind\":\"heartbeat\",\"repo\":\"${repo}\"}"
+  else
+    payload='{"kind":"heartbeat"}'
+  fi
   stop  # avoid duplicate loops
   ( i=0
     while [ "$i" -lt 720 ]; do            # 720 * 60s = 12h safety cap
       curl -s -m 3 -X POST "https://v2.heroboard.app/api/heartbeat" \
         -H "X-Api-Key: ${key}" -H "Content-Type: application/json" \
-        -d '{"kind":"heartbeat"}' >/dev/null 2>&1
+        -d "$payload" >/dev/null 2>&1
       i=$((i + 1)); sleep 60
     done
     rm -f "$PIDFILE" ) >/dev/null 2>&1 &
