@@ -1,0 +1,11 @@
+{
+  "name": "heroboard",
+  "owner": { "name": "Heroboard" },
+  "plugins": [
+    {
+      "name": "heroboard",
+      "source": "./plugins/heroboard",
+      "description": "Heroboard for Claude Code — task tools (MCP), effort heartbeats (Monkey/Agent time), and /heroboard slash commands."
+    }
+  ]
+}
