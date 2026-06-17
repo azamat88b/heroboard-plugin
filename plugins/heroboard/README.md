@@ -1,6 +1,6 @@
 # Heroboard — Claude Code plugin
 
-Connects your Claude Code session to [Heroboard](https://v2.heroboard.app): task tools over
+Connects your Claude Code session to [Heroboard](https://dev.heroboard.app): task tools over
 MCP, effort heartbeats that turn your terminal time into XP, and `/heroboard` commands.
 
 ## What you get

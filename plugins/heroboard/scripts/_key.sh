@@ -14,7 +14,7 @@
 HB_CONFDIR="${XDG_CONFIG_HOME:-$HOME/.config}/heroboard-plugin"
 HB_KEYFILE="$HB_CONFDIR/key"
 
-# Opt-in debug log (HB-254): hooks are otherwise invisible — you can't tell if they fire,
+# Opt-in debug log (HB-258): hooks are otherwise invisible — you can't tell if they fire,
 # resolve a key, or what the server replies. Enable by `export HEROBOARD_DEBUG=1` OR by
 # `touch ~/.config/heroboard-plugin/debug`, then tail ~/.config/heroboard-plugin/debug.log.
 # Off by default, best-effort, never fails the hook. Logs never contain the key itself.

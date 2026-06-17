@@ -23,7 +23,7 @@ else
 fi
 hb_log "POST repo=${repo:-<none>}"
 # Backgrounded so the hook never blocks the prompt; capture the HTTP status to the debug log.
-( code=$(curl -s -m 3 -o /dev/null -w '%{http_code}' -X POST "https://v2.heroboard.app/api/heartbeat" \
+( code=$(curl -s -m 3 -o /dev/null -w '%{http_code}' -X POST "https://dev.heroboard.app/api/heartbeat" \
     -H "X-Api-Key: ${key}" \
     -H "Content-Type: application/json" \
     -d "$payload" 2>/dev/null)

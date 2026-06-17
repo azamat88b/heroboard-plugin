@@ -12,14 +12,15 @@
 # Lifecycle: SessionStart → start, SessionEnd → stop (via PID file). A hard 12h cap means
 # even an orphaned loop dies on its own.
 PIDFILE="${TMPDIR:-/tmp}/heroboard-presence.pid"
+. "$(cd "$(dirname "$0")" && pwd)/_key.sh"  # hb_resolve_key (key, HB-252) + hb_log (opt-in debug, HB-258)
+HB_TAG="presence"
 
 stop() {
-  [ -f "$PIDFILE" ] && kill "$(cat "$PIDFILE")" >/dev/null 2>&1
+  if [ -f "$PIDFILE" ]; then hb_log "stop (pid=$(cat "$PIDFILE" 2>/dev/null))"; kill "$(cat "$PIDFILE")" >/dev/null 2>&1; fi
   rm -f "$PIDFILE"
 }
 
 start() {
-  . "$(cd "$(dirname "$0")" && pwd)/_key.sh"  # keychain key, with ~/.config/heroboard-plugin/key fallback (HB-252)
   key="$(hb_resolve_key)"
   # Required config: with no api_key NOTHING accrues — this ticker AND the per-prompt/-edit
   # heartbeat hooks all silently no-op. Claude Code lets the plugin be enabled without the
@@ -28,13 +29,14 @@ start() {
   # blocks startup). SessionStart is the single warning surface — the heartbeat hook stays
   # quiet so the same notice isn't repeated on every prompt/edit (HB-248).
   if [ -z "$key" ]; then
+    hb_log "no key — surfacing warning, ticker not started"
     printf '%s\n' '{"systemMessage":"Heroboard: required config missing — api_key. Effort tracking is OFF until it is set. Configure it via /plugin → heroboard → Configure (paste your hb_… key), then start a new session. In the Claude app, also run the plugin in a terminal once so the hooks can read the key."}'
     exit 0
   fi
   # presence ticker is default-on unless the toggle is explicitly falsey (HB-247)
   toggle="${CLAUDE_PLUGIN_OPTION_presence_ticker:-${CLAUDE_PLUGIN_OPTION_PRESENCE_TICKER:-${HEROBOARD_PRESENCE_TICKER:-1}}}"
   case "$(printf '%s' "$toggle" | tr '[:upper:]' '[:lower:]')" in
-    0|false|off|no|"") exit 0 ;;
+    0|false|off|no|"") hb_log "disabled by toggle ($toggle)"; exit 0 ;;
   esac
   # Repo of the session's working dir, captured once → the server maps it to a project so
   # presence time accrues to the right workspace (HB-250). Not a repo → unattributed.
@@ -45,11 +47,13 @@ start() {
     payload='{"kind":"heartbeat"}'
   fi
   stop  # avoid duplicate loops
+  hb_log "start (repo=${repo:-<none>})"
   ( i=0
     while [ "$i" -lt 720 ]; do            # 720 * 60s = 12h safety cap
-      curl -s -m 3 -X POST "https://v2.heroboard.app/api/heartbeat" \
+      code=$(curl -s -m 3 -o /dev/null -w '%{http_code}' -X POST "https://dev.heroboard.app/api/heartbeat" \
         -H "X-Api-Key: ${key}" -H "Content-Type: application/json" \
-        -d "$payload" >/dev/null 2>&1
+        -d "$payload")
+      hb_log "tick $i -> HTTP ${code:-000}"
       i=$((i + 1)); sleep 60
     done
     rm -f "$PIDFILE" ) >/dev/null 2>&1 &
