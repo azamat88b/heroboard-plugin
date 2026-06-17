@@ -19,14 +19,23 @@ stop() {
 }
 
 start() {
-  # default-on unless the toggle is explicitly falsey (HB-247)
+  . "$(cd "$(dirname "$0")" && pwd)/_key.sh"  # keychain key, with ~/.config/heroboard-plugin/key fallback (HB-252)
+  key="$(hb_resolve_key)"
+  # Required config: with no api_key NOTHING accrues — this ticker AND the per-prompt/-edit
+  # heartbeat hooks all silently no-op. Claude Code lets the plugin be enabled without the
+  # required key, so instead of doing nothing we surface a loud, non-blocking warning once
+  # per session via the SessionStart hook's `systemMessage` (shown to the user; exit 0 never
+  # blocks startup). SessionStart is the single warning surface — the heartbeat hook stays
+  # quiet so the same notice isn't repeated on every prompt/edit (HB-248).
+  if [ -z "$key" ]; then
+    printf '%s\n' '{"systemMessage":"Heroboard: required config missing — api_key. Effort tracking is OFF until it is set. Configure it via /plugin → heroboard → Configure (paste your hb_… key), then start a new session. In the Claude app, also run the plugin in a terminal once so the hooks can read the key."}'
+    exit 0
+  fi
+  # presence ticker is default-on unless the toggle is explicitly falsey (HB-247)
   toggle="${CLAUDE_PLUGIN_OPTION_presence_ticker:-${CLAUDE_PLUGIN_OPTION_PRESENCE_TICKER:-${HEROBOARD_PRESENCE_TICKER:-1}}}"
   case "$(printf '%s' "$toggle" | tr '[:upper:]' '[:lower:]')" in
     0|false|off|no|"") exit 0 ;;
   esac
-  . "$(cd "$(dirname "$0")" && pwd)/_key.sh"  # keychain key, with ~/.heroboard/key fallback (HB-252)
-  key="$(hb_resolve_key)"
-  [ -z "$key" ] && exit 0
   # Repo of the session's working dir, captured once → the server maps it to a project so
   # presence time accrues to the right workspace (HB-250). Not a repo → unattributed.
   repo="$(git -C "${CLAUDE_PROJECT_DIR:-$PWD}" config --get remote.origin.url 2>/dev/null)"

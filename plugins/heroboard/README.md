@@ -25,9 +25,9 @@ macOS / Linux / Windows and in GUI editors (VSCode, JetBrains) — anywhere Clau
 
 **Agent-mode (Claude app) note.** In desktop/web *agent-mode* sessions the keychain key reaches
 the MCP server but isn't exported into the effort hooks' shell env, so the hooks alone can't
-authenticate. To bridge this, the first terminal CLI session caches the key to `~/.heroboard/key`
-(`0600`), which agent-mode hooks then read. So run the plugin in a terminal once after install to
-enable effort tracking inside the app. Delete that file to opt out.
+authenticate. To bridge this, the first terminal CLI session caches the key to
+`~/.config/heroboard-plugin/key` (`0600`), which agent-mode hooks then read. So run the plugin in a
+terminal once after install to enable effort tracking inside the app. Delete that file to opt out.
 
 To change the key later, update the plugin's config via `/plugin` (or disable + re-enable).
 
