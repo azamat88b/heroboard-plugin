@@ -12,10 +12,14 @@
 #
 # Lifecycle: SessionStart → start, SessionEnd → stop (via PID file). A hard 12h cap means
 # even an orphaned loop dies on its own.
-PIDFILE="${TMPDIR:-/tmp}/heroboard-presence.pid"
-ACTFILE="${TMPDIR:-/tmp}/heroboard-last-activity"  # mtime bumped by heartbeat.sh on prompts (HB-269)
+. "$(cd "$(dirname "$0")" && pwd)/_key.sh"  # hb_resolve_key (key, HB-252) + hb_log (HB-258) + hb_session_id
+# Per-session id (reads the hook's stdin JSON once, see _key.sh). Namespacing both state files
+# by it means each concurrent session runs its own correctly-attributed ticker, and OS users
+# sharing /tmp on a Linux box never collide on the pid/activity files.
+HB_SID="$(hb_session_id)"
+PIDFILE="${TMPDIR:-/tmp}/heroboard-presence.${HB_SID}.pid"
+ACTFILE="${TMPDIR:-/tmp}/heroboard-last-activity.${HB_SID}"  # mtime bumped by heartbeat.sh on prompts (HB-269); path must match heartbeat's
 IDLE_MAX=300  # stop accruing 5 min after the last human prompt
-. "$(cd "$(dirname "$0")" && pwd)/_key.sh"  # hb_resolve_key (key, HB-252) + hb_log (opt-in debug, HB-258)
 HB_TAG="presence"
 
 stop() {

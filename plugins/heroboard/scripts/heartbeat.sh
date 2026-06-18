@@ -8,14 +8,17 @@
 # purpose: this fires on every prompt/edit, so the loud "required config missing" warning lives
 # once at SessionStart (presence-ticker.sh) instead of spamming it per event (HB-248).
 kind="${1:-heartbeat}"
+. "$(cd "$(dirname "$0")" && pwd)/_key.sh"
+# Per-session id (reads the hook's stdin JSON once, see _key.sh) so the activity marker is
+# namespaced — concurrent sessions and shared-box OS users don't clobber each other's file.
+HB_SID="$(hb_session_id)"
 # Mark live human presence — but ONLY on real prompts (UserPromptSubmit fires kind=heartbeat).
 # The presence ticker reads this file's mtime and goes idle 5 min after the last human prompt;
 # agent tool-use (kind=code) deliberately does NOT refresh it, so an open session no longer
-# farms effort overnight (HB-269).
-[ "$kind" = "heartbeat" ] && touch "${TMPDIR:-/tmp}/heroboard-last-activity" 2>/dev/null
-. "$(cd "$(dirname "$0")" && pwd)/_key.sh"
+# farms effort overnight (HB-269). Path must match presence-ticker.sh's ACTFILE for this session.
+[ "$kind" = "heartbeat" ] && touch "${TMPDIR:-/tmp}/heroboard-last-activity.${HB_SID}" 2>/dev/null
 HB_TAG="heartbeat:${kind}"
-hb_log "fired (cwd=${CLAUDE_PROJECT_DIR:-$PWD})"
+hb_log "fired (cwd=${CLAUDE_PROJECT_DIR:-$PWD} sid=${HB_SID})"
 key="$(hb_resolve_key)"
 [ -z "$key" ] && { hb_log "no-op: no key"; exit 0; }
 # Repo of the working dir → the server maps it to a project so this time accrues to the right
