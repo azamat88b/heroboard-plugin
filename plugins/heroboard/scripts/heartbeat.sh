@@ -8,6 +8,11 @@
 # purpose: this fires on every prompt/edit, so the loud "required config missing" warning lives
 # once at SessionStart (presence-ticker.sh) instead of spamming it per event (HB-248).
 kind="${1:-heartbeat}"
+# Mark live human presence — but ONLY on real prompts (UserPromptSubmit fires kind=heartbeat).
+# The presence ticker reads this file's mtime and goes idle 5 min after the last human prompt;
+# agent tool-use (kind=code) deliberately does NOT refresh it, so an open session no longer
+# farms effort overnight (HB-269).
+[ "$kind" = "heartbeat" ] && touch "${TMPDIR:-/tmp}/heroboard-last-activity" 2>/dev/null
 . "$(cd "$(dirname "$0")" && pwd)/_key.sh"
 HB_TAG="heartbeat:${kind}"
 hb_log "fired (cwd=${CLAUDE_PROJECT_DIR:-$PWD})"
