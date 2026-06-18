@@ -22,6 +22,45 @@ ACTFILE="${TMPDIR:-/tmp}/heroboard-last-activity.${HB_SID}"  # mtime bumped by h
 IDLE_MAX=300  # stop accruing 5 min after the last human prompt
 HB_TAG="presence"
 
+# --- update nudge (plugin-only, GitHub raw) ----------------------------------
+# Updates are pull-based and there's no built-in "update available" alert for third-party
+# marketplaces, so we surface one ourselves: once/day, compare the installed version against
+# the version published on the marketplace repo and, if newer, print a one-line systemMessage
+# at SessionStart with the upgrade commands. Pure bash (no node/jq on the user's box),
+# best-effort, throttled — bounded by a 2s curl only on check days, instant (file read) otherwise.
+UPD_CACHE="$HB_CONFDIR/update-check"            # one line: "<epoch> <latest-version>"
+UPD_INTERVAL=86400                              # re-check at most once per day
+UPD_RAW_URL="${HEROBOARD_UPDATE_URL:-https://raw.githubusercontent.com/azamat88b/heroboard-plugin/main/plugins/heroboard/.claude-plugin/plugin.json}"
+
+hb_pjson_version() { grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$1" 2>/dev/null | head -1 | cut -d'"' -f4; }
+
+# true iff $1 is a strictly higher semver than $2 (via sort -V; bails quietly if unavailable,
+# so a box without GNU/BSD sort -V just never nudges rather than nudging wrongly).
+hb_version_gt() {
+  [ "$1" = "$2" ] && return 1
+  local hi; hi="$(printf '%s\n%s\n' "$1" "$2" | sort -V 2>/dev/null | tail -n1)"
+  [ -n "$hi" ] && [ "$hi" = "$1" ]
+}
+
+hb_update_nudge() {
+  [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] || return 0
+  local installed; installed="$(hb_pjson_version "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json")"
+  [ -n "$installed" ] || return 0
+  local now last latest; now="$(date +%s)"; last=0; latest=""
+  [ -f "$UPD_CACHE" ] && read -r last latest < "$UPD_CACHE" 2>/dev/null
+  case "${last:-}" in ''|*[!0-9]*) last=0 ;; esac   # corrupt cache → force a re-check
+  if [ "$(( now - last ))" -ge "$UPD_INTERVAL" ]; then
+    local fetched; fetched="$(curl -fsS -m 2 "$UPD_RAW_URL" 2>/dev/null | hb_pjson_version /dev/stdin)"
+    [ -n "$fetched" ] && latest="$fetched"
+    mkdir -p "$HB_CONFDIR" 2>/dev/null && printf '%s %s\n' "$now" "$latest" > "$UPD_CACHE" 2>/dev/null
+  fi
+  [ -n "$latest" ] || return 0
+  if hb_version_gt "$latest" "$installed"; then
+    hb_log "update available ($installed -> $latest)"
+    printf '{"systemMessage":"Heroboard: plugin update available (%s → %s). Run  /plugin update heroboard@heroboard  then  /reload-plugins  to upgrade."}\n' "$installed" "$latest"
+  fi
+}
+
 stop() {
   if [ -f "$PIDFILE" ]; then hb_log "stop (pid=$(cat "$PIDFILE" 2>/dev/null))"; kill "$(cat "$PIDFILE")" >/dev/null 2>&1; fi
   rm -f "$PIDFILE"
@@ -40,6 +79,9 @@ start() {
     printf '%s\n' '{"systemMessage":"Heroboard: required config missing — api_key. Effort tracking is OFF until it is set. Configure it via /plugin → heroboard → Configure (paste your hb_… key), then start a new session. In the Claude app, also run the plugin in a terminal once so the hooks can read the key."}'
     exit 0
   fi
+  # Nudge once/day if a newer version is published (best-effort; runs before the toggle gate so
+  # the reminder still surfaces even when the continuous ticker is turned off).
+  hb_update_nudge
   # presence ticker is default-on unless the toggle is explicitly falsey (HB-247)
   toggle="${CLAUDE_PLUGIN_OPTION_presence_ticker:-${CLAUDE_PLUGIN_OPTION_PRESENCE_TICKER:-${HEROBOARD_PRESENCE_TICKER:-1}}}"
   case "$(printf '%s' "$toggle" | tr '[:upper:]' '[:lower:]')" in
